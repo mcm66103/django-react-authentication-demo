@@ -5,15 +5,13 @@ import './App.css';
 let FetchWithHeaders = async function(verb, url, data){
     const request = {
             method: verb,
-            headers: { 'X-Auth-Token': data['jwt'] },
-            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            headers: {
+                'Authorization': `Bearer ${data['jwt']}`,
+                'Content-Type': 'application/json',
+            },
             mode: 'cors', // no-cors, cors, *same-origin
             cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
             credentials: 'same-origin', // include, *same-origin, omit
-            headers: {
-                'Content-Type': 'application/json',
-                // 'Content-Type': 'application/x-www-form-urlencoded',
-            },
             redirect: 'follow', // manual, *follow, error
             referrer: 'no-referrer', // no-referrer, *client
         };
@@ -25,6 +23,9 @@ let FetchWithHeaders = async function(verb, url, data){
     const responseObj = await fetch(url, request)
         .then(function(response){
             return response
+        })
+        .catch(function(e){
+            console.log(e);
         });
 
     return responseObj;
@@ -47,18 +48,22 @@ class App extends React.Component {
     this.setState({[event.target.name]: event.target.value});
   }
 
-    async login(){
-            var rsp = await FetchWithHeaders('POST', 'http://localhost:8000/login/', this.state);
-            console.log(rsp)
-            rsp.json().then((parsedJson) => {
-                console.log('This is the parsed json', parsedJson);
-                console.log(parsedJson['jwt']);
-                this.setState({jwt: parsedJson['jwt']});
-                localStorage.setItem("jwt", parsedJson['jwt']);
-              });
-
-
+    login(){
+     FetchWithHeaders('POST', 'http://localhost:8000/login/', this.state)
+               .then(rsp=> rsp.json())
+               .then((rsp)=> {
+                    var data = rsp;
+                    console.log('This is the parsed json', data);
+                    console.log(data['jwt']);
+                    this.setState({jwt: data['jwt']});
+                });
     }
+
+    loginStatus(){
+        FetchWithHeaders('POST', 'http://localhost:8000/login-test/', this.state)
+        .then((rsp) => rsp.json())
+        .then((rsp) => console.log(rsp))
+     }
 
     render(){
         return (
@@ -66,7 +71,10 @@ class App extends React.Component {
               <input type="text" name="username" value={this.state.username} onChange={this.handleChange}/>
               <input type="password" name="password" value={this.state.password} onChange={this.handleChange} />
               <button type="submit" onClick={()=>this.login()} value="submit">submit</button>
+              <button type="submit" onClick={()=>this.loginStatus()} value="submit">submit</button>
+
             </div>
+
         )
       }
 }
