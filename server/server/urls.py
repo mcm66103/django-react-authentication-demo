@@ -13,12 +13,38 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from rest_framework import routers, serializers, viewsets
+
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from django.conf.urls import include
+from django.contrib.auth.models import User
+
+from comments.serializers import CommentViewSet
+
 from .views import Login, loginTest
+# Serializers define the API representation.
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = User
+        fields = ['url', 'username', 'email', 'is_staff']
+
+# ViewSets define the view behavior.
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# Routers provide an easy way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'comments', CommentViewSet)
 
 urlpatterns = [
+    path('', include(router.urls)),
+
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),
+
     path('login/', Login, name='Login'),
     path('login-test/', loginTest, name='loginTest'),
 ]
